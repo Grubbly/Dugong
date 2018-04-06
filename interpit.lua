@@ -177,7 +177,7 @@ function interpit.interp(ast, state, incall, outcall)
 
     function eval_expr(ast)
       if (ast[1] == NUMLIT_VAL) then
-        io.write("NUMLIT_VAL" .. numToInt(strToNum(ast[2])) .. "\n")
+        io.write("NUMLIT_VAL " .. numToInt(strToNum(ast[2])) .. "\n")
         return numToInt(strToNum(ast[2]))
         
       elseif ast[1] == SIMPLE_VAR then
@@ -185,7 +185,8 @@ function interpit.interp(ast, state, incall, outcall)
         return ast[2]
         
       elseif ast[1] == ARRAY_VAR then
-        io.write("ARRAY_VAR" .. "\n")
+        io.write("ARRAY_VAR " .. type(ast[2]) .. " " .. ast[2] .. " " .. type(eval_expr(ast[3])) .. " " .. eval_expr(ast[3]) .. "\n")
+        return ast[2], eval_expr(ast[3])
         
       elseif ast[1] == BOOLLIT_VAL then
         io.write("BOOLLIT_VAL " .. ast[2] .. "\n")
@@ -207,8 +208,15 @@ function interpit.interp(ast, state, incall, outcall)
         local name, body, str
 
         if ast[1] == INPUT_STMT then
-            rVal = numToInt(strToNum(incall()))
-            print("Input stmt; DUNNO WHAT TO DO!!!")
+            io.write(astToStr(ast))
+            input = numToInt(strToNum(incall()))
+            if ast[2][1] == ARRAY_VAR then
+              arrayID, index = eval_expr(ast[2])
+              state.a[arrayID][index] = input
+            else
+              state.v[eval_expr(ast[2])] = input
+            end
+            
         elseif ast[1] == PRINT_STMT then
             for i = 2, #ast do
                 if ast[i][1] == CR_OUT then
@@ -237,7 +245,15 @@ function interpit.interp(ast, state, incall, outcall)
             print("While stmt; DUNNO WHAT TO DO!!!")
         else
             assert(ast[1] == ASSN_STMT)
-            state.v[eval_expr(ast[2])] = eval_expr(ast[3])
+            
+            if ast[2][1] == ARRAY_VAR then
+              io.write(astToStr(ast))
+              arrayID, index = eval_expr(ast[2])
+              io.write("Inside: " .. arrayID .. " " .. index)
+              state.a[arrayID][index] = eval_expr(ast[3])
+            else
+              state.v[eval_expr(ast[2])] = eval_expr(ast[3])
+            end
         end
     end
 
