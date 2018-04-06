@@ -176,6 +176,9 @@ function interpit.interp(ast, state, incall, outcall)
     end
 
     function eval_expr(ast)
+      
+      io.write("INSIDE EVAL_EXPR: " .. astToStr(ast))
+      
       if (ast[1] == NUMLIT_VAL) then
         io.write("NUMLIT_VAL " .. numToInt(strToNum(ast[2])) .. "\n")
         return numToInt(strToNum(ast[2]))
@@ -185,7 +188,7 @@ function interpit.interp(ast, state, incall, outcall)
         return ast[2]
         
       elseif ast[1] == ARRAY_VAR then
-        io.write("ARRAY_VAR " .. type(ast[2]) .. " " .. ast[2] .. " " .. type(eval_expr(ast[3])) .. " " .. eval_expr(ast[3]) .. "\n")
+        --io.write("ARRAY_VAR " .. type(ast[2]) .. " " .. ast[2] .. " " .. type(eval_expr(ast[3])) .. " " .. eval_expr(ast[3]) .. "\n")
         return ast[2], eval_expr(ast[3])
         
       elseif ast[1] == BOOLLIT_VAL then
@@ -198,6 +201,11 @@ function interpit.interp(ast, state, incall, outcall)
       elseif type(ast[1]) == "table" then
         if ast[1][1] == UN_OP then
           io.write("UN_OP\n")
+          if ast[1][2] == "+" then
+            return numToInt(strToNum(ast[2][2]))
+          else
+            return -1 * numToInt(strToNum(ast[2][2]))
+          end
         elseif ast[1][1] == BIN_OP then
           io.write("BIN_OP\n")
         end
@@ -225,7 +233,32 @@ function interpit.interp(ast, state, incall, outcall)
                     str = ast[i][2]
                     outcall(str:sub(2,str:len()-1))  -- Remove quotes
                 else
-                    print("Print stmt with expression; DUNNO WHAT TO DO!!!")
+                    io.write(astToStr(ast))
+                    
+                    if ast[i][1] == NUMLIT_VAL then
+                      outcall(numToStr(eval_expr(ast[i])))
+                      
+                    elseif ast[i][1] == SIMPLE_VAR then
+                      associatedValue = state.v[eval_expr(ast[i])]
+                      if associatedValue == nil then
+                        outcall("0")
+                      else
+                        outcall(numToStr(associatedValue))
+                      end
+                    
+                    elseif ast[i][1] == ARRAY_VAR then
+                      arrayID, index = eval_expr(ast[i])
+                      if state.a[arrayID] == nil or state.a[arrayID][index] == nil then
+                        outcall("0")
+                      else
+                        outcall(numToStr(state.a[arrayID][index]))
+                      end
+                    
+                    
+                    elseif type(ast[i][1]) == "table" then
+                      outcall(numToStr(eval_expr(ast[i])))
+                    
+                    end
                 end
             end
         elseif ast[1] == FUNC_STMT then
@@ -246,13 +279,19 @@ function interpit.interp(ast, state, incall, outcall)
         else
             assert(ast[1] == ASSN_STMT)
             
+            rhs = eval_expr(ast[3])
             if ast[2][1] == ARRAY_VAR then
-              io.write(astToStr(ast))
+              
               arrayID, index = eval_expr(ast[2])
-              io.write("Inside: " .. arrayID .. " " .. index)
-              state.a[arrayID][index] = eval_expr(ast[3])
+              
+              if state.a[arrayID] == nil then
+                state.a[arrayID] = {[index]=rhs}
+              else
+                state.a[arrayID][index] = rhs
+              end
+              
             else
-              state.v[eval_expr(ast[2])] = eval_expr(ast[3])
+              state.v[eval_expr(ast[2])] = rhs
             end
         end
     end
