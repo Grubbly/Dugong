@@ -177,14 +177,14 @@ function interpit.interp(ast, state, incall, outcall)
 
     function eval_expr(ast)
       
-      --io.write("INSIDE EVAL_EXPR: " .. astToStr(ast))
+      --io.write(astToStr(ast))
       
       if (ast[1] == NUMLIT_VAL) then
-        io.write("NUMLIT_VAL " .. numToInt(strToNum(ast[2])) .. "\n")
+        --io.write("NUMLIT_VAL " .. numToInt(strToNum(ast[2])) .. "\n")
         return numToInt(strToNum(ast[2]))
         
       elseif ast[1] == SIMPLE_VAR then
-        io.write("SIMPLE_VAR " .. ast[2] .. "\n")
+        --io.write("SIMPLE_VAR " .. ast[2] .. "\n")
         if state.v[ast[2]] ~= nil then
           return state.v[ast[2]]
         else
@@ -199,20 +199,20 @@ function interpit.interp(ast, state, incall, outcall)
         end
         
       elseif ast[1] == BOOLLIT_VAL then
-        io.write("BOOLLIT_VAL " .. ast[2] .. "\n")
+        --io.write("BOOLLIT_VAL " .. ast[2] .. "\n")
         return boolToInt((ast[2] == "true"))
         
       elseif ast[1] == CALL_FUNC then
-        io.write("CALL_FUNC\n")
+        --io.write("CALL_FUNC\n")
         
       elseif type(ast[1]) == "table" then
         if ast[1][1] == UN_OP then
-          io.write("UN_OP\n")
+          --io.write("UN_OP\n")
           
           if ast[1][2] == "+" then
             return eval_expr(ast[2])
           elseif ast[1][2] == "-" then
-            io.write("\nINSIDE - : " .. astToStr(ast))
+            --io.write("\nINSIDE - : " .. astToStr(ast))
             return -1 * eval_expr(ast[2])
           elseif ast[1][2] == "!" then
             if ast[2][2] == "1" or ast[2][2] == "0" then
@@ -221,8 +221,9 @@ function interpit.interp(ast, state, incall, outcall)
               return 0
             end
           end
+          
         elseif ast[1][1] == BIN_OP then
-          io.write("BIN_OP\n")
+          --io.write("BIN_OP\n")
           if ast[1][2] == "+" then
             return numToInt(eval_expr(ast[2]) + eval_expr(ast[3]))
             
@@ -272,7 +273,9 @@ function interpit.interp(ast, state, incall, outcall)
             end
             
           elseif ast[1][2] == "||" then
-            return boolToInt(ast[2][2] ~= "0" and ast[3][2] ~= "0")
+            return boolToInt(ast[2][2] ~= "0" or ast[3][2] ~= "0")
+            
+          
           end
         end
       end
@@ -282,7 +285,6 @@ function interpit.interp(ast, state, incall, outcall)
         local name, body, str
 
         if ast[1] == INPUT_STMT then
-            io.write(astToStr(ast))
             input = numToInt(strToNum(incall()))
             if ast[2][1] == ARRAY_VAR then
               arrayID, index = ast[2][2], strToNum(ast[2][3][2])
@@ -299,7 +301,7 @@ function interpit.interp(ast, state, incall, outcall)
                     str = ast[i][2]
                     outcall(str:sub(2,str:len()-1))  -- Remove quotes
                 else
-                    io.write(astToStr(ast))
+                    --io.write(astToStr(ast))
                     
                     if ast[i][1] == NUMLIT_VAL then
                       outcall(numToStr(eval_expr(ast[i])))
@@ -341,8 +343,36 @@ function interpit.interp(ast, state, incall, outcall)
                 body = { STMT_LIST }  -- Default AST
             end
             interp_stmt_list(body)
-        elseif ast[1] == IF_STMT then
-            print("If stmt; DUNNO WHAT TO DO!!!")
+        
+      elseif ast[1] == IF_STMT then
+        nestedIfs = 2
+        
+            if eval_expr(ast[nestedIfs]) ~= 0 then
+              --io.write("case 1")
+              interp_stmt_list(ast[nestedIfs+1])
+            end
+            nestedIfs = nestedIfs + 2
+            
+            while true do
+            if ast[nestedIfs] ~= nil and 
+                   ast[nestedIfs][1] ~= STMT_LIST and 
+                   eval_expr(ast[nestedIfs]) ~= 0 then
+              --io.write("case 2")
+              interp_stmt_list(ast[nestedIfs+1])
+              if ast[nestedIfs+1][1] == STMT_LIST then
+                nestedIfs = nestedIfs + 1
+              else
+                nestedIfs = nestedIfs + 2
+              end
+            elseif ast[nestedIfs] ~= nil and ast[nestedIfs][1] == STMT_LIST then
+              --io.write("case 3")
+              interp_stmt_list(ast[nestedIfs])
+              break;
+            else
+              break;
+            end
+        end
+            
         elseif ast[1] == WHILE_STMT then
             print("While stmt; DUNNO WHAT TO DO!!!")
         else
@@ -350,7 +380,6 @@ function interpit.interp(ast, state, incall, outcall)
             
             rhs = eval_expr(ast[3])
             if ast[2][1] == ARRAY_VAR then
-              io.write("Inside Array Assignment: " .. astToStr(ast))
               arrayID, index = ast[2][2], strToNum(ast[2][3][2])
               
               if state.a[arrayID] == nil then
@@ -360,7 +389,6 @@ function interpit.interp(ast, state, incall, outcall)
               end
               
             else
-              io.write("Inside Simple Assignment: " .. astToStr(ast))
               state.v[ast[2][2]] = rhs
             end
         end
