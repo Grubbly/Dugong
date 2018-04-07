@@ -1217,7 +1217,7 @@ function test_expr(t)
     checkInterp(t, ast, input, statein, expoutput, expstateout,
       "Print || #4")
 
-    -- Longer expression
+    --Longer expression
     ast =
       {STMTxLIST,
         {PRINTxSTMT,
@@ -1233,7 +1233,7 @@ function test_expr(t)
             }
           }
         }
-      }
+      } 
     input = {}
     statein = {v={["x"]=3, ["y"]=5}, a={}, f={}}
     expoutput = {"44"}
