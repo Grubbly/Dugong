@@ -346,6 +346,7 @@ function interpit.interp(ast, state, incall, outcall)
         
       elseif ast[1] == IF_STMT then
         nestedIfs = 2
+        
             while true do
             	if ast[nestedIfs+1] == nil or #ast[nestedIfs+1] <= 1 then
             		break
