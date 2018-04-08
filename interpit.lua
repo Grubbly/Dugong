@@ -1,14 +1,13 @@
--- interpit.lua
--- Tristan Van Cise
--- 04/05/2018
---
--- Interpret AST from parseit.parse
--- For Assignment 6, Exercise B
-
-
--- *******************************************************************
--- * To run a Dugong program, use dugong.lua (which uses this file). *
--- *******************************************************************
+------------------------------------------------------------------------
+-- interpit.lua                                                       --
+-- Tristan Van Cise                                                   --
+-- 04/05/2018                                                         --
+-- Last Modified: 04/08/2018                                          --
+--                                                                    --
+-- Interpret AST from parseit.parse by evaluating branches via        --
+-- traversal about sequentially linked nodes                          --
+-- For Assignment 6, Exercise B                                       --
+------------------------------------------------------------------------
 
 
 local interpit = {}  -- Our module
@@ -169,12 +168,24 @@ function interpit.interp(ast, state, incall, outcall)
     -- function-wide version of state may be modified as appropriate.
 
 
+    -- interp_stmt_list
+    -- 
+    -- Given an ast beginning with STMT_LIST, each section of the
+    -- statement is evaluated with successive calls to interp_stmt
+    -- depending on the number of expressions.
+    --
     function interp_stmt_list(ast)
         for i = 2, #ast do
             interp_stmt(ast[i])
         end
     end
-
+    
+    -- eval_expr
+    --
+    -- Given a branch of an AST, the individual elements are evaluated
+    -- recursively to modify the program state or perform an action that
+    -- results in a value being returned back to the caller
+    --
     function eval_expr(ast)
       
       if (ast[1] == NUMLIT_VAL) then
@@ -283,7 +294,13 @@ function interpit.interp(ast, state, incall, outcall)
         end
       end
     end
-
+    
+    -- interp_stmt
+    --
+    -- Given an ast, determines the actions that need to be applied
+    -- to evaluate, input, output to console, or change the state
+    -- of the current program.
+    --
     function interp_stmt(ast)
         local name, body, str
 
